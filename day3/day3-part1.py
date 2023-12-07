@@ -1,112 +1,72 @@
-# input_file = open("input.txt", "r")
-input_file = open("example_input.txt", "r")
+input_file = open("input.txt", "r")
+# input_file = open("example_input.txt", "r")
 
 symbol_list = ["!", "@", "#", "$", "%", "^", "&", "(", ")", "*", "-", "+", "=", "/"]
 symbol_index_to_process = []
 valid_engine_numbers = []
 line_data = input_file.readlines()
-
-def getNumberOfSymbolsInLine(current_line_content):
-    symbol_counter = 0
-    for index,char in enumerate(current_line_content):
-        if char in symbol_list:
-            print(f"{char} symbol found at index: {index} on line: {line_number}")
-            symbol_index_to_process.append(index)
-            symbol_counter += 1
-    return symbol_counter
-
-def getAdjacentAndDiagonalCharacters(line_number_with_symbol, index_of_symbol):
-    char_directly_above = ""
-    upper_left_diagonal = ""
-    upper_right_diagonal = ""
-    char_directly_below = ""
-    lower_left_diagonal = ""
-    lower_right_diagonal = ""
-    left_char = ""
-    right_char = ""
-
-    left_char = line_data[line_number_with_symbol]
-    left_char = left_char[index_of_symbol-1]
-    print(f"Left char: {left_char}")
-
-    right_char = line_data[line_number_with_symbol]
-    right_char = right_char[index_of_symbol+1]
-    print(f"Right char: {right_char}")
-
-    line_directly_above = getPreviousLine(line_number_with_symbol)
     
-    if line_directly_above != "":
-        char_directly_above = line_directly_above[index_of_symbol]
-        print(f"Char directly above: {char_directly_above}")
-        upper_left_diagonal = getUpperLeftDiagonal(line_directly_above, index_of_symbol)
-        print(f"Upper left diagonal: {upper_left_diagonal}")
-        upper_right_diagonal = getUpperRightDiagonal(line_directly_above, index_of_symbol)
-        print(f"Upper right diagonal: {upper_right_diagonal}")
+def checkForAdjacentOrDiagonalSymbol(current_line_number, start_index, end_index):
+    adjacent_and_diagnonal_chars = []
+    current_line_data = line_data[current_line_number].strip()
+    left_adjacent = None
+    right_adjacent = None
 
-    line_directly_below = getNextLine(line_number_with_symbol)
+    if start_index != 0:
+        left_adjacent = current_line_data[start_index-1]
+        adjacent_and_diagnonal_chars.append(left_adjacent)
+    
+    if end_index != (len(current_line_data)-1):
+        right_adjacent = current_line_data[end_index+1]
+        adjacent_and_diagnonal_chars.append(right_adjacent)
+    
+    if current_line_number != 0:
+        previous_line = line_data[current_line_number-1].strip()
+        for index, char in enumerate(previous_line):
+            if (index >= start_index-1) and (index <= end_index+1):
+                adjacent_and_diagnonal_chars.append(char)
 
-    if line_directly_below != "":
-        char_directly_below = line_directly_below[index_of_symbol]
-        print(f"Char directly below: {char_directly_below}")
-        lower_left_diagonal = getLowerLeftDiagonal(line_directly_below, index_of_symbol)
-        print(f"Lower left diagonal: {lower_left_diagonal}")
-        lower_right_diagonal = getLowerRightDiagonal(line_directly_below, index_of_symbol)
-        print(f"Lower right diagonal: {lower_right_diagonal}")
+    if current_line_number != (len(line_data)-1):
+        next_line = line_data[current_line_number+1].strip()
+        for index, char in enumerate(next_line):
+            if (index >= start_index-1) and (index <= end_index+1):
+                adjacent_and_diagnonal_chars.append(char)
 
-    return left_char, right_char, char_directly_above, upper_left_diagonal, upper_right_diagonal, char_directly_below, lower_left_diagonal, lower_right_diagonal
-    
+    for entry in adjacent_and_diagnonal_chars:
+        if entry in symbol_list:
+            return True
 
-def getPreviousLine(current_line_index):
-    if current_line_index == 0:
-        return ""
-    else:
-        return line_data[current_line_index-1]
-    
-def getUpperLeftDiagonal(previous_line, index_of_symbol):
-    if index_of_symbol == 0:
-        return ""
-    else:
-        return previous_line[index_of_symbol-1]
-    
-def getUpperRightDiagonal(previous_line, index_of_symbol):
-    if index_of_symbol == len(previous_line):
-        return ""
-    else:
-        return previous_line[index_of_symbol+1]
+    return False
 
-    
-def getNextLine(current_line_index):
-    if current_line_index == len(line_content):
-        return ""
-    else:
-        return line_data[current_line_index+1]
-    
-def getLowerLeftDiagonal(next_line, index_of_symbol):
-    if index_of_symbol == 0:
-        return ""
-    else:
-        return next_line[index_of_symbol-1]
-    
-def getLowerRightDiagonal(next_line, index_of_symbol):
-    if index_of_symbol == len(next_line):
-        return ""
-    else:
-        return next_line[index_of_symbol+1]
+for line_number,line_content in enumerate(line_data):
+    current_number = []
+    building_number = False
+    number_start_index = 0
+    start_index_logged = False
+    number_end_index = 0
+    for index, c in enumerate(line_content):
+        if c.isdigit():
+            building_number = True
+            if not start_index_logged:
+                start_index_logged = True
+                number_start_index = index
+            current_number.append(c)
+        elif not c.isdigit() and building_number:
+            # check for adjacent or diagonal symbol
+            # if adjacent or diagonal symbol is present, add to valid_engine_numbers
+            building_number = False
+            start_index_logged = False
+            number_end_index = index-1
+            if checkForAdjacentOrDiagonalSymbol(line_number, number_start_index, number_end_index):
+                valid_engine_numbers.append(''.join(current_number))
+            current_number = []
+
+sum = 0
+for num in valid_engine_numbers:
+    sum += int(num)
 
 print("==========================================")
-for line_number,line_content in enumerate(line_data):
-    symbols_processed = 0
-    symbols_in_line = getNumberOfSymbolsInLine(line_content)
-    if symbols_in_line != 0:
-        if (symbols_in_line == 1):
-            print(f"There is {symbols_in_line} symbol in line number {line_number}")
-            getAdjacentAndDiagonalCharacters(line_number, symbol_index_to_process.pop())
-        else:
-            print(f"There are {symbols_in_line} symbols in line number {line_number}")
-            while(len(symbol_index_to_process)):
-                index_to_check = symbol_index_to_process.pop()
-                print(f"Processing the {line_content[index_to_check]} symbol now, from index {index_to_check}")
-                getAdjacentAndDiagonalCharacters(line_number, index_to_check)
-    else:
-        print(f"There are no symbols in line number {line_number}")
-    print("==========================================")
+print("==========================================")
+print(f"Sum of valid engine numbers: {sum}")
+print("==========================================")
+print("==========================================")
